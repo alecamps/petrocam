@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PetroCAM - Gestor de documentos</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* --- PALETA DE COLORES OPTIMIZADA --- */
+            --bg-deep: linear-gradient(135deg, #ECEEF2 0%, #D4DBE5 100%); /* Degradado Gris a Gris Azulado */
+            --header-bg: #1B365D; 
+            --footer-bg: #1B365D; 
+            --dark-blue: #1C4782;
+            --accent-green: #10b981; 
+            --white: #ffffff;
+            --card-shadow: 0 8px 20px rgba(28, 71, 130, 0.08);
+            --text-main: #1C4782;
+            --card-border: 1px solid rgba(28, 71, 130, 0.15);
+            --card-item-bg: #ffffff;
+        }
+
+        body.dark-mode {
+            /* --- PALETA EN MODO OSCURO INTEGRADA --- */
+            --bg-deep: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --header-bg: #1B365D; 
+            --footer-bg: #1B365D; 
+            --white: #1e293b;
+            --text-main: #f8fafc;
+            --accent-green: #65f4d3; 
+            --card-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            --card-border: 1px solid #334155;
+            --card-item-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            background: var(--bg-deep);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 100;
+            transition: background-color 0.3s ease;
+        }
+
+        .logo-area { cursor: pointer; transition: opacity 0.2s; }
+        .logo-area img { height: 50px; }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            width: 40px; 
+            height: 40px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+
+        .theme-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+
+        .theme-toggle:active img {
+            transform: scale(0.9);
+        }
+
+        .icon-sun { display: none !important; }
+        .icon-moon { display: block !important; }
+
+        body.dark-mode .icon-sun { display: block !important; }
+        body.dark-mode .icon-moon { display: none !important; }
+
+        .hero-section {
+            padding: 20px 20px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .banner-container {
+            width: 75%;
+            max-width: 420px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: max-width 0.3s ease;
+            cursor: pointer;
+        }
+
+        .banner-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        .banner-night { display: none !important; }
+        body.dark-mode .banner-day { display: none !important; }
+        body.dark-mode .banner-night { display: block !important; }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 15px 15px 55px; 
+            border-radius: 12px;
+            border: 2px solid rgba(28, 71, 130, 0.2);
+            font-size: 1rem;
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #0a2540;
+            box-shadow: var(--card-shadow);
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .search-box input {
+            background-color: rgba(30, 41, 59, 0.9);
+            color: var(--text-main);
+            border-color: #334155;
+        }
+        
+        .search-box input:focus {
+            border-color: var(--dark-blue);
+            background-color: #ffffff;
+        }
+        body.dark-mode .search-box input:focus {
+            border-color: var(--accent-green);
+        }
+
+        .search-box i { 
+            position: absolute; 
+            left: 20px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: var(--dark-blue); 
+            z-index: 10; 
+            pointer-events: none; 
+            font-size: 1.1rem;
+        }
+        body.dark-mode .search-box i { color: var(--accent-green); }
+
+        #main-menu {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 10px 20px 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 600px) {
+            #main-menu { grid-template-columns: 1fr; }
+            .banner-container { max-width: 280px; width: 80%; }
+        }
+
+        .menu-card { 
+            position: relative; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            cursor: pointer; 
+            box-shadow: var(--card-shadow); 
+            border: var(--card-border);
+            height: 100%;
+            min-height: 120px;
+            box-sizing: border-box;
+            background-color: #000;
+        }
+
+        .card-bg { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background-size: cover; 
+            background-position: center;
+            transition: transform 0.4s ease;
+        }
+
+        .menu-card:active .card-bg { transform: scale(1.05); }
+
+        .card-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(10, 37, 64, 0.85) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .menu-card h2 { margin: 0; color: #ffffff; font-size: 1.2rem; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+        .menu-card p { color: #66FF66; margin: 0 0 3px 0; font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 1px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+
+        footer {
+            background-color: var(--footer-bg);
+            height: 40px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            transition: background-color 0.3s ease;
+        }
+        
+        .footer-right button {
+            background: none; border: none; color: #ffffff; font-weight: 600; cursor: pointer; font-size: 0.8rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .footer-right button { 
+            color: #66FF66; 
+        }
+
+        #info-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 15px; text-align: center; width: 80%; max-width: 260px; backdrop-filter: blur(5px); border: 1px solid #e1e4e8;
+        }
+        body.dark-mode .modal-content { background: var(--white); border-color: #334155; }
+        .modal-content img { width: 80px; height: 80px; border-radius: 10px; margin-bottom: 10px; object-fit: cover; }
+        .modal-content h3 { margin: 5px 0; font-size: 1.1rem; color: var(--dark-blue); }
+        body.dark-mode .modal-content h3 { color: #ffffff; }
+        .modal-content p { margin: 3px 0; font-size: 0.85rem; }
+        
+        .modal-email { color: var(--dark-blue) !important; font-weight: bold; }
+        body.dark-mode .modal-email { color: #66FF66 !important; }
+
+        #section-view { display: none; flex-direction: column; height: 100%; background: var(--bg-deep); }
+        .section-header { background: #1B365D; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-home { background: #fff; color: #1B365D; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        
+        #item-count { 
+            font-size: 1.1rem !important; 
+            font-weight: 700; 
+            color: #65f4d3; 
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.15); 
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .pdf-list { flex: 1; overflow-y: auto; padding: 10px 20px; }
+        .pdf-item { border-bottom: 1px solid rgba(28, 71, 130, 0.08); padding: 15px; display: flex; align-items: center; cursor: pointer; background: var(--card-item-bg); border-radius: 10px; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .pdf-item i { color: #e53e3e; margin-right: 12px; }
+        .pdf-item.folder i { color: #f39c12; }
+        
+        .pdf-item i.fa-external-link-alt { color: #1C4782; }
+        body.dark-mode .pdf-item i.fa-external-link-alt { color: #65f4d3; }
+
+        #viewer-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+        .viewer-header { background: #1a202c; color: #fff; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        iframe { width: 100%; height: calc(100% - 50px); border: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-area" onclick="toggleInfoModal()">
+        <img src="img/Logo_app.png" alt="PetroCAM">
+    </div>
+    <button class="theme-toggle" onclick="toggleDarkMode()">
+        <img src="img/luna.png" alt="Modo Nocturno" class="icon-moon">
+        <img src="img/sol.png" alt="Modo Diurno" class="icon-sun">
+    </button>
+</header>
+
+<div class="hero-section">
+    <div class="banner-container" onclick="goToHome()">
+        <img src="img/banner_dia.png" alt="Gestor de Documentos" class="banner-day">
+        <img src="img/banner_noche.png" alt="Gestor de Documentos" class="banner-night">
+    </div>
+    
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="mainSearch" placeholder="Buscar documento..." onkeyup="handleSearch()">
+    </div>
+</div>
+
+<div id="main-menu">
+    <div class="menu-card" onclick="openSection('FICHAS DE SEGURIDAD')">
+        <div class="card-bg" style="background-image: url('img/fichas.jpg');"></div>
+        <div class="card-overlay"><p>Seguridad Química</p><h2>FICHAS DE SEGURIDAD</h2></div>
+    </div>
+    <div class="menu-card" onclick="openSection('PROCEDIMIENTOS')">
+        <div class="card-bg" style="background-image: url('img/procedimientos.jpg');"></div>
+        <div class="card-overlay"><p>Operaciones</p><h2>PROCEDIMIENTOS</h2></div>
+    </div>
+    <div class="menu-card" onclick="openSection('POLITICAS')">
+        <div class="card-bg" style="background-image: url('img/politicas.jpg');"></div>
+        <div class="card-overlay"><p>Corporativo</p><h2>POLITICAS</h2></div>
+    </div>
+    <div class="menu-card" onclick="openSection('INFORMACION RELEVANTE')">
+        <div class="card-bg" style="background-image: url('img/informacion.jpg');"></div>
+        <div class="card-overlay"><p>Varios</p><h2>INFORMACION RELEVANTE</h2></div>
+    </div>
+</div>
+
+<footer id="app-footer">
+    <div class="footer-right">
+        <button onclick="toggleInfoModal()">Sobre PetroCAM...</button>
+    </div>
+</footer>
+
+<div id="info-modal" onclick="toggleInfoModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <img src="img/gato.jpg" alt="Info">
+        <h3>PetroCAM v2.026</h3>
+        <p><strong>GESTOR DE DOCUMENTOS</strong></p>
+        <p>Copyright © 2026 Alejandro Campastro</p>
+        <p class="modal-email">campastro@hotmail.com</p>
+        <button onclick="toggleInfoModal()" style="margin-top:10px; padding:8px 15px; border-radius:8px; border:none; background:#1B365D; color:white; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+
+<div id="section-view">
+    <div class="section-header">
+        <button class="btn-home" onclick="goToHome()">Volver</button>
+        <h2 id="section-title" style="margin:0; font-size: 1rem;">Sección</h2>
+        <div id="item-count"></div>
+    </div>
+    <div class="pdf-list" id="pdfContainer"></div>
+</div>
+
+<div id="viewer-modal">
+    <div class="viewer-header">
+        <span id="pdf-name-display" style="font-size: 0.8rem;">Archivo</span>
+        <button onclick="closeViewer()" style="background:#e53e3e; color:white; border:none; padding:5px 10px; border-radius:4px;">CERRAR</button>
+    </div>
+    <iframe id="pdfFrame" src=""></iframe>
+</div>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js');
+        });
+    }
+
+    const database = {
+        "FICHAS DE SEGURIDAD": [
+            "ABC3010 - PQB.pdf","AQCUAR - Dupont.pdf","BIOTREAT 16207 - Clariant.pdf","BISULFITO DE AMONIO - Clariant.pdf","BLX-16158 - Buckman.pdf","BW-6033 - Multi-Chem - Halliburton.pdf","BX707 - PECOM.pdf","BX936 - PECOM.pdf","BXC2070 - PECOM.pdf","DBC4070 - PQB.pdf","DBC4878 - PECOM.pdf","DBC4927 - PQB.pdf","DBC4949 - PQB.pdf","DEFOAMER AF-177 - Champion.pdf","DEMTROL D-7623 - PBBPOLISUR.pdf","DISMULGAN V 3377 - Clariant.pdf","DISSOLVAN M - Clariant.pdf","DODISCALE 435 - Clariant.pdf","DPB66 - PQB.pdf","EC2561A - ChampionX.pdf","EC6785A - ChampionX.pdf","ECI 600 - WEZOL.pdf","EMBR18373A - ChampionX.pdf","FBS1747 - PECOM.pdf","FBS2021 - PECOM.pdf","FLEXOIL FM-116 - Nalco.pdf","FLOCTREAT 14107 - Clariant.pdf","FLOCTREAT 15499 - Clariant.pdf","FOAMATRON VDF-138 - Champion.pdf","FONGRAFLOC 030 - Clariant.pdf","GYPTRON TA-70 - ChampionX.pdf","H-100 - Clariant.pdf","HASA N - Clariant.pdf","HASA P 628.pdf","ICS400 - PECOM.pdf","IPC3551 - PECOM.pdf","MC MX 1-4186 - Multi-Chem - Halliburton.pdf","MC MX 1-4188 - Multi-Chem - Halliburton.pdf","MC MX 2-5819 - Multi-Chem - Halliburton.pdf","MC MX 6-2960 - Multi-Chem - Halliburton.pdf","MC MX 6-3469 - Multi-Chem - Halliburton.pdf","MC MX 6-3837 - Multi-Chem - Halliburton.pdf","MC MXC 6-3931 - Multi-Chem - Halliburton.pdf","Metanol - Ladco.pdf","Multisweet M-8055 - Multi-Chem - Halliburton.pdf","NALCO EC2561A - Nalco.pdf","NALCO EC6785A - Nalco.pdf","NORFLOC 17561 - Norken.pdf","NORFLOC F30 - Norken.pdf","NORFLOC PA - Norken.pdf","PERMATREAT PC-510 - Nalco.pdf","PROSOLV BI8803 - VEOLIA.pdf","PROSOLV BI9495L - VEOLIA.pdf","PROSOLV CI8077L - VEOLIA.pdf","PROSOLV HS8786 - SUEZ.pdf","PROSOLV OS8702 - VEOLIA.pdf","RECO RE733 - RECO.pdf","RECO RF4700 - RECO.pdf","RECO RF4800 - RECO.pdf","RT903SP - PECOM.pdf","SCAL10075B - Nalco.pdf","SCAL16157A EXP - ChampionX.pdf","SCAL16555A - Nalco.pdf","SCAL16762A - Nalco.pdf","SCI-FOAM EC7016A - ChampionX.pdf","SDS AE 650 - WEZOL.pdf","SEQUEST OS 40 - Clariant.pdf","SODA CAUSTICA - Clariant.pdf","SURFATRON DN-155 - ChampionX.pdf","TROSKIL 2415B - Clariant.pdf","UALCO EC6630A - Nalco.pdf","PROSOLV WCI8062 - VEOLIA.pdf","WSW3001 - Baker Petrolite.pdf",
+            "IC5400 - PECOM.pdf", "IC5405 - PECOM.pdf", "RBW-111 - Baker Hughes.pdf"
+        ],
+        "PROCEDIMIENTOS VERMAZ": [
+            "PO.02 Reposicion de productos quimicos Rev.08.pdf", 
+            "PO.03 Bacheo con productos quimicos e pozos e Instalaciones de produccion REV05.pdf", 
+            "PO.13 Respuesta ante contingencias DyRPQ REV01.pdf", 
+            "PO.14 Tareas en presencia de sulfhidrico SH2 REV02.pdf", 
+            "PO.41 Operaciones con Hidrogrua.pdf", 
+            "PO.42 Limites de Velocidad para la Conduccion Segura.pdf"
+        ],
+        "PROCEDIMIENTOS PAE": [
+            "PAE-GSV-ES 001 Seguridad vial.pdf",
+            "PAE-SAF-PG-005 Espacios Confinados.pdf",
+            "PAE-SAF-PG-008 Equipos, EPP y ropa de trabajo.pdf",
+            "PAE-SAF-PG-009 Sistema de Permisos de Trabajo.pdf",
+            "PAE-SAF-PG-012 Trabajos en Altura.pdf",
+            "PAE-SAF-PG-013 Levantamiento de Cargas.pdf",
+            "PAE-SAF-PG-013.01 Plan de Izaje Grua Hidrogrua.pdf",
+            "PAE-SAF-PG-021 Caida de objetos.pdf",
+            "PAE-SAF-PG-022 Excavaciones y movimiento de suelos.pdf"
+        ],
+        "POLITICAS": [], 
+        "POLITICAS VERMAZ": [
+            "Politica Cero Alcohol y Drogas Rev.02 - 2021.pdf", 
+            "Calidad, Ambiente, Salud y Seguridad Ocupacional Rev.03 - 2021.pdf", 
+            "Mision, Vision y Valores Rev.02 - 2021.pdf", 
+            "Politica Vehicular Rev.01 - 2021.pdf"
+        ],
+        "POLITICAS PAE": [
+            "Politica Ambiental Rev.08 - 2016.pdf",
+            "Politica de Operacion Sustentable y Calidad Rev.07 - 2022.pdf",
+            "Politica de Suspension de Tareas Rev.02 - 2022.pdf"
+        ],
+        "INFORMACION RELEVANTE": [
+            "GRE 2024.pdf", "Horario nocturno 2026.pdf", "Mapa de Cerro Dragon y alrededores.pdf", 
+            "Pictogramas SGA.pdf", "Plan de Contingencia - Rev.14.pdf", 
+            "Reglas que salvan vidas - Afiche PAE.pdf", "Reglas que salvan vidas - PAE.pdf", 
+            "Suspension de tareas.pdf", "Velocidades maximas.pdf"
+        ],
+        "PRP 2026": [
+            "Instructivo- Nueva PRP Contratistas.pdf",
+            "Modelo - Batcheo de Producto Quimico.pdf",
+            "Modelo - Carga y Transporte de Producto Quimico.pdf",
+            "Modelo - Reposicion con hidrogrua.pdf",
+            "Modelo - Reposicion de Producto Quimico.pdf"
+        ]
+    };
+
+    let activeSection = "";
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    function toggleInfoModal() {
+        const modal = document.getElementById('info-modal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function openSection(name) {
+        activeSection = name;
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('section-view').style.display = 'flex';
+        document.getElementById('section-title').innerText = name;
+        
+        document.getElementById('app-footer').style.display = 'none';
+
+        if (name === 'PROCEDIMIENTOS') {
+            const container = document.getElementById('pdfContainer');
+            container.innerHTML = `
+                <div class="pdf-item folder" onclick="openSection('PROCEDIMIENTOS VERMAZ')">
+                    <i class="fas fa-folder"></i> <span>Procedimientos VERMAZ</span>
+                </div>
+                <div class="pdf-item folder" onclick="openSection('PROCEDIMIENTOS PAE')">
+                    <i class="fas fa-folder"></i> <span>Procedimientos PAE</span>
+                </div>
+            `;
+            document.getElementById('item-count').innerText = "0 archivos";
+        } else if (name === 'POLITICAS') {
+            const container = document.getElementById('pdfContainer');
+            container.innerHTML = `
+                <div class="pdf-item folder" onclick="openSection('POLITICAS VERMAZ')">
+                    <i class="fas fa-folder"></i> <span>Políticas VERMAZ</span>
+                </div>
+                <div class="pdf-item folder" onclick="openSection('POLITICAS PAE')">
+                    <i class="fas fa-folder"></i> <span>Políticas PAE</span>
+                </div>
+            `;
+            document.getElementById('item-count').innerText = "0 archivos";
+        } else if (name === 'INFORMACION RELEVANTE') {
+            const container = document.getElementById('pdfContainer');
+            
+            container.innerHTML = `
+                <div class="pdf-item folder" onclick="openSection('PRP 2026')">
+                    <i class="fas fa-folder"></i> <span>PRP 2026</span>
+                </div>
+                <div class="pdf-item" onclick="openFormularioInterno('Gerenciamiento de Viaje Digital', 'https://docs.google.com/forms/d/e/1FAIpQLSdrw05jwNzcDfjORZixTdqVs1CCzL_y2iaNtH_Ugelal5sUUQ/viewform')">
+                    <i class="fas fa-external-link-alt"></i> <span>Gerenciamiento de Viaje Digital</span>
+                </div>
+            `;
+            
+            const files = database[name] || [];
+            files.sort().forEach(f => {
+                const row = document.createElement('div');
+                row.className = 'pdf-item';
+                row.onclick = () => openPDF(f);
+                row.innerHTML = `<i class="fas fa-file-pdf"></i> <span>${f.replace('.pdf','')}</span>`;
+                container.appendChild(row);
+            });
+            
+            document.getElementById('item-count').innerText = `${files.length} archivos`;
+        } else {
+            renderList(database[name] || []);
+        }
+    }
+
+    function goToHome() {
+        activeSection = "";
+        document.getElementById('main-menu').style.display = 'grid';
+        document.getElementById('section-view').style.display = 'none';
+        document.getElementById('mainSearch').value = "";
+        
+        document.getElementById('app-footer').style.display = 'flex';
+    }
+
+    function renderList(files) {
+        const container = document.getElementById('pdfContainer');
+        container.innerHTML = "";
+        files.sort().forEach(f => {
+            const row = document.createElement('div');
+            row.className = 'pdf-item';
+            row.onclick = () => openPDF(f);
+            row.innerHTML = `<i class="fas fa-file-pdf"></i> <span>${f.replace('.pdf','')}</span>`;
+            container.appendChild(row);
+        });
+        document.getElementById('item-count').innerText = `${files.length} archivos`;
+    }
+
+    function handleSearch() {
+        const q = document.getElementById('mainSearch').value.toLowerCase().trim();
+        if (q.length > 0) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('section-view').style.display = 'flex';
+            
+            document.getElementById('app-footer').style.display = 'none';
+            
+            let results = [];
+            for (let cat in database) {
+                database[cat].forEach(file => { if (file.toLowerCase().includes(q)) results.push(file); });
+            }
+            renderList(results);
+        } else if (activeSection !== "") {
+            openSection(activeSection);
+        } else {
+            goToHome();
+        }
+    }
+
+    function openPDF(file) {
+        document.getElementById('pdf-name-display').innerText = file;
+        document.getElementById('pdfFrame').src = `assets/${file}`;
+        document.getElementById('viewer-modal').style.display = 'block';
+    }
+
+    function openFormularioInterno(titulo, url) {
+        document.getElementById('pdf-name-display').innerText = titulo;
+        document.getElementById('pdfFrame').src = url;
+        document.getElementById('viewer-modal').style.display = 'block';
+    }
+
+    function closeViewer() {
+        document.getElementById('viewer-modal').style.display = 'none';
+        document.getElementById('pdfFrame').src = "";
+    }
+</script>
+</body>
+</html>
