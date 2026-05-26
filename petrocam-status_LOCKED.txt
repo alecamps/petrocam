@@ -4,3 +4,4 @@ active
 
 Para aplicar el killswitch debe decir:
 locked|La aplicación actualmente no está disponible. Comuníquese con Alejandro Campastro al correo campastro@hotmail.com.
+locked|... 
